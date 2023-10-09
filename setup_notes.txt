@@ -1,0 +1,43 @@
+# virtual environment setup
+virtualenv cl_env --python=python3.8
+source cl_env/bin/activate
+
+# if you want to modify the notebook yourself
+#git clone git@github.com:sokrypton/ColabFold.git
+# to get going right away
+git clone git@github.com:rivesunder/ColabFold.git
+
+cd ColabFold
+
+# colabfold dependencies
+pip install -q --no-warn-conflicts 'colabfold[alphafold-minus-jax] @ git+https://github.com/sokrypton/ColabFold'
+
+pip install --upgrade dm-haiku
+
+# check the jax version
+pip freeze | grep jax
+# probably it is the cpu version of jaxlib
+#>>jax==0.4.13
+#>>jaxlib==0.4.13
+
+# remove old jax
+pip uninstall jax jaxlib
+
+# install jax for your cuda version
+pip install --upgrade "jax[cuda11_local]" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+
+# check the jax version
+pip freeze | grep jax
+# success! 
+#>>jax==0.4.13
+#>>jaxlib==0.4.13+cuda11.cudnn86
+
+
+ln -s cl_env/lib/python3.8/site-packages/alphafold alphafold
+# this one is not needed:
+#ln -s cl_env/lib/python3.8/site-packages/colabfold colabfold
+
+sed -i 's/weights = jax.nn.softmax(logits)/logits=jnp.clip(logits,-1e8,1e8);weights=jax.nn.softmax(logits)/g' alphafold/model/modules.py
+
+# writes a file indicating colabfold is good to go.
+touch COLABFOLD_READY
